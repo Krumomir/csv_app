@@ -16,6 +16,24 @@ Charlie
 """
 
 
+def mock_open_file_conditionally(mocker, content):
+    mock_file = mocker.mock_open(read_data=content)
+
+    def side_effect(filename, mode='r'):
+        if filename == 'mocked_file.csv':
+            return mock_file()
+        else:
+            raise FileNotFoundError
+    mocker.patch('builtins.open', side_effect=side_effect)
+
+
+def test_load_csv_with_filename(mocker):
+    mock_open_file_conditionally(mocker, CSV_CONTENT)
+    data = load_csv('mocked_file.csv')
+    assert len(data) == 4
+    assert data[1] == ["Alice", "28", "55000.5"]
+
+
 def test_load_csv_with_invalid_filename(mocker):
     # Mock the open function to raise a FileNotFoundError
     mocker.patch('builtins.open', side_effect=FileNotFoundError)
