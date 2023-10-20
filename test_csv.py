@@ -24,6 +24,7 @@ def mock_open_file_conditionally(mocker, content):
             return mock_file()
         else:
             raise FileNotFoundError
+
     mocker.patch('builtins.open', side_effect=side_effect)
 
 
@@ -35,7 +36,6 @@ def test_load_csv_with_filename(mocker):
 
 
 def test_load_csv_with_invalid_filename(mocker):
-    # Mock the open function to raise a FileNotFoundError
     mocker.patch('builtins.open', side_effect=FileNotFoundError)
 
     with pytest.raises(FileNotFoundError):
@@ -101,8 +101,8 @@ def test_count_rows(mocker):
 def test_sum_column(mocker):
     csv_file = mock_open_file(mocker, CSV_CONTENT)
     data = load_csv(csv_file)
-    assert sum_column(data, 1) == 82
-    assert sum_column(data, 2) == 164001.6
+    assert sum_column(data[1:], 1) == 82
+    assert sum_column(data[1:], 2) == 164001.6
 
 
 def test_min_max_avg(mocker):
@@ -120,3 +120,69 @@ def test_shortest_longest_string(mocker):
     shortest, longest = shortest_longest_string(data, 0)
     assert shortest == "Bob"
     assert longest == "Charlie"
+
+
+def test_order_preservation(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+    assert data[1] == ["Alice", "28", "55000.5"]
+    assert data[2] == ["Bob", "24", "49000.3"]
+
+
+def test_age_out_of_range(mocker):
+    invalid_age_csv = """name,age
+    Alice,121
+    """
+    csv_file = mock_open_file(mocker, invalid_age_csv)
+    data = load_csv(csv_file)
+    with pytest.raises(ValueError):
+        sum_column(data, 1)
+
+
+def test_negative_salary(mocker):
+    invalid_salary_csv = """name,salary
+    Alice,-55000.5
+    """
+    csv_file = mock_open_file(mocker, invalid_salary_csv)
+    data = load_csv(csv_file)
+    with pytest.raises(ValueError):
+        sum_column(data, 1)
+
+
+def test_non_float_age(mocker):
+    invalid_age_csv = """name,age
+    Alice,twenty-eight
+    """
+    csv_file = mock_open_file(mocker, invalid_age_csv)
+    data = load_csv(csv_file)
+    with pytest.raises(ValueError):
+        min_max_avg(data, 1)
+
+
+def test_cross_check_sum(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+    ages = [float(row[1]) for row in data[1:]]
+    salaries = [float(row[2]) for row in data[1:]]
+
+    assert sum_column(data[1:], 1) == sum(ages)
+    assert sum_column(data[1:], 2) == sum(salaries)
+
+
+def test_invalid_column_in_functions(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+    with pytest.raises(IndexError):
+        sum_column(data, 5)
+
+    with pytest.raises(IndexError):
+        min_max_avg(data, 5)
+
+    with pytest.raises(IndexError):
+        shortest_longest_string(data, 5)
+
+
+def test_cardinality(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+    assert len(data) == 4

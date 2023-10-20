@@ -7,8 +7,9 @@ def load_csv(file_or_filename):
     else:
         file = file_or_filename
 
-    reader = csv.reader(file, delimiter=',', skipinitialspace=True)  # ',' by default
-    data = [row for row in reader]
+    reader = csv.reader(file, delimiter=',', skipinitialspace=True)
+
+    data = [row for row in reader if len(row) > 0]
 
     if isinstance(file_or_filename, (str, bytes)):
         file.close()
@@ -22,13 +23,14 @@ def count_rows(data):
 
 def sum_column(data, col_index):
     total = 0
-    index = 0
-    row = data[1:]
-    while index < len(row):
-        total += float(row[index][col_index])
-        index += 1
+    for row in data:
+        try:
+            total += float(row[col_index])
+        except ValueError:
+            raise ValueError(f"Invalid value at column {col_index}: {row[col_index]}")
 
     assert total  # not empty
+
     return total
 
 
