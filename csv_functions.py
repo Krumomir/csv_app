@@ -32,7 +32,7 @@ def sum_column(data, col_index):
         raise ValueError(f"Column index {col_index} must be greater than 0")
 
     total = 0
-    for row in data:
+    for row in data[1:]:
         try:
             total += float(row[col_index])
         except ValueError:
@@ -65,6 +65,10 @@ def shortest_longest_string(data, col_index):
 
     strings = []
     for row in data[1:]:
+        if row[col_index] == "":
+            continue
+        elif not isinstance(row[col_index], str):
+            raise ValueError(f"Invalid value at column {col_index}: {row[col_index]}")
         strings.append(row[col_index])
     shortest = min(strings, key=len)
     longest = max(strings, key=len)
