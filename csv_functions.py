@@ -3,7 +3,11 @@ import csv
 
 def load_csv(file_or_filename):
     if isinstance(file_or_filename, (str, bytes)):
-        file = open(file_or_filename, 'r')
+        try:
+            file = open(file_or_filename, 'r')
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File {file_or_filename} not found")
+
     else:
         file = file_or_filename
 
@@ -22,6 +26,11 @@ def count_rows(data):
 
 
 def sum_column(data, col_index):
+    if col_index >= len(data[0]):
+        raise IndexError(f"Column index {col_index} out of range")
+    elif col_index <= 0:
+        raise ValueError(f"Column index {col_index} must be greater than 0")
+
     total = 0
     for row in data:
         try:
@@ -35,6 +44,11 @@ def sum_column(data, col_index):
 
 
 def min_max_avg(data, col_index):
+    if col_index >= len(data[0]):
+        raise IndexError(f"Column index {col_index} out of range")
+    elif col_index <= 0:
+        raise ValueError(f"Column index {col_index} must be greater than 0")
+
     values = []
     for row in data[1:]:
         values.append(float(row[col_index]))
@@ -44,6 +58,11 @@ def min_max_avg(data, col_index):
 
 
 def shortest_longest_string(data, col_index):
+    if col_index >= len(data[0]):
+        raise IndexError(f"Column index {col_index} out of range")
+    elif col_index < 0:
+        raise ValueError(f"Column index {col_index} must be greater than 0")
+
     strings = []
     for row in data[1:]:
         strings.append(row[col_index])

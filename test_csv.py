@@ -19,7 +19,7 @@ Charlie
 def mock_open_file_conditionally(mocker, content):
     mock_file = mocker.mock_open(read_data=content)
 
-    def side_effect(filename, mode='r'):
+    def side_effect(filename, mode):
         if filename == 'mocked_file.csv':
             return mock_file()
         else:
@@ -65,13 +65,6 @@ def test_single_column_csv(mocker):
     data = load_csv(csv_file)
     assert count_rows(data) == 3
     assert shortest_longest_string(data, 0) == ("Bob", "Charlie")
-
-
-def test_invalid_column_index(mocker):
-    csv_file = mock_open_file(mocker, CSV_CONTENT)
-    data = load_csv(csv_file)
-    with pytest.raises(IndexError):
-        sum_column(data, 5)
 
 
 def test_non_numeric_sum(mocker):
@@ -186,3 +179,67 @@ def test_cardinality(mocker):
     csv_file = mock_open_file(mocker, CSV_CONTENT)
     data = load_csv(csv_file)
     assert len(data) == 4
+
+
+def test_column_index_out_of_range_high(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(IndexError):
+        sum_column(data, 10)  # 10 is clearly out of range
+
+
+def test_column_index_out_of_range_low(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        sum_column(data, -1)  # Negative index
+
+
+def test_column_index_zero(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        sum_column(data, 0)  # Index 0 (generally used for headers)
+
+
+def test_min_max_avg_column_index_out_of_range_high(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(IndexError):
+        min_max_avg(data, 10)  # 10 is clearly out of range
+
+
+def test_min_max_avg_column_index_out_of_range_low(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        min_max_avg(data, -1)  # Negative index
+
+
+def test_min_max_avg_column_index_zero(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        min_max_avg(data, 0)  # Index 0 (generally used for headers)
+
+
+def test_shortest_longest_string_column_index_out_of_range_high(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(IndexError):
+        shortest_longest_string(data, 10)  # 10 is clearly out of range
+
+
+def test_shortest_longest_string_column_index_out_of_range_low(mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        shortest_longest_string(data, -1)  # Negative index
