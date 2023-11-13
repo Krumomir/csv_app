@@ -7,4 +7,8 @@ def tests(session):
     session.run("pytest", "-v", "--cov=csv_functions", "--cov-report=term-missing")
     session.run("coverage", "report", "-m", external=True)
 
-# nox -s tests
+
+@nox.session
+def benchmarks(session):
+    session.install("-r", "requirements.txt", "pytest", "pytest-benchmark")
+    session.run("pytest", "--benchmark-only", "test_csv.py")

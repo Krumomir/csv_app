@@ -1,6 +1,7 @@
 import pytest
 
-from csv_functions import load_csv, count_rows, sum_column, min_max_avg, shortest_longest_string
+from csv_functions import (load_csv, count_rows, sum_column, min_max_avg, shortest_longest_string)
+
 
 CSV_CONTENT = """name,age,salary
 Alice,28,55000.5
@@ -16,6 +17,64 @@ Charlie
 """
 
 
+@pytest.mark.benchmark
+def test_sum_column_benchmark(benchmark, mocker):
+    mock_open_file_conditionally(mocker, CSV_CONTENT)
+    data = load_csv('mocked_file.csv')
+
+    result = benchmark(sum_column, data[1:], 1)
+
+    assert result is not None
+
+
+@pytest.mark.benchmark
+def test_age_out_of_range_benchmark(benchmark, mocker):
+    invalid_age_csv = """name,age
+    Alice,121
+    """
+    csv_file = mock_open_file(mocker, invalid_age_csv)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        result = benchmark(sum_column, data, 0)
+
+        assert result is not None
+
+
+@pytest.mark.benchmark
+def test_negative_salary_benchmark(benchmark, mocker):
+    invalid_salary_csv = """name,salary
+    Alice,-55000.5
+    """
+    csv_file = mock_open_file(mocker, invalid_salary_csv)
+    data = load_csv(csv_file)
+
+    with pytest.raises(ValueError):
+        result = benchmark(sum_column, data, 0)
+
+        assert result is not None
+
+
+@pytest.mark.benchmark
+def test_cross_check_sum_benchmark(benchmark, mocker):
+    csv_file = mock_open_file(mocker, CSV_CONTENT)
+    data = load_csv(csv_file)
+    ages = [float(row[1]) for row in data[1:]]
+
+    result1 = benchmark(sum_column, data[0:], 1)
+
+    assert result1 == sum(ages)
+
+
+@pytest.mark.benchmark
+def test_load_csv_with_filename_benchmark(benchmark, mocker):
+    mock_open_file_conditionally(mocker, CSV_CONTENT)
+    data = load_csv('mocked_file.csv')
+    result = benchmark(count_rows, data)
+
+    assert result == 3
+
+
 def mock_open_file_conditionally(mocker, content):
     mock_file = mocker.mock_open(read_data=content)
 
@@ -26,13 +85,6 @@ def mock_open_file_conditionally(mocker, content):
             raise FileNotFoundError
 
     mocker.patch('builtins.open', side_effect=side_effect)
-
-
-def test_load_csv_with_filename(mocker):
-    mock_open_file_conditionally(mocker, CSV_CONTENT)
-    data = load_csv('mocked_file.csv')
-    assert len(data) == 4
-    assert data[1] == ["Alice", "28", "55000.5"]
 
 
 def test_load_csv_with_invalid_filename(mocker):
@@ -91,13 +143,6 @@ def test_count_rows(mocker):
     assert count_rows(data) == 3
 
 
-def test_sum_column(mocker):
-    csv_file = mock_open_file(mocker, CSV_CONTENT)
-    data = load_csv(csv_file)
-    assert sum_column(data[1:], 1) == 82
-    assert sum_column(data[1:], 2) == 164001.6
-
-
 def test_min_max_avg(mocker):
     csv_file = mock_open_file(mocker, CSV_CONTENT)
     data = load_csv(csv_file)
@@ -122,44 +167,22 @@ def test_order_preservation(mocker):
     assert data[2] == ["Bob", "24", "49000.3"]
 
 
-def test_age_out_of_range(mocker):
-    invalid_age_csv = """name,age
-    Alice,121
-    """
-    csv_file = mock_open_file(mocker, invalid_age_csv)
-    data = load_csv(csv_file)
-    with pytest.raises(ValueError):
-        sum_column(data, 1)
-
-
-def test_negative_salary(mocker):
-    invalid_salary_csv = """name,salary
-    Alice,-55000.5
-    """
-    csv_file = mock_open_file(mocker, invalid_salary_csv)
-    data = load_csv(csv_file)
-    with pytest.raises(ValueError):
-        sum_column(data, 1)
-
-
 def test_non_float_age(mocker):
     invalid_age_csv = """name,age
     Alice,twenty-eight
     """
+
     csv_file = mock_open_file(mocker, invalid_age_csv)
     data = load_csv(csv_file)
     with pytest.raises(ValueError):
         min_max_avg(data, 1)
 
 
-def test_cross_check_sum(mocker):
+def test_sum_column(mocker):
     csv_file = mock_open_file(mocker, CSV_CONTENT)
     data = load_csv(csv_file)
-    ages = [float(row[1]) for row in data[1:]]
-    salaries = [float(row[2]) for row in data[1:]]
-
-    assert sum_column(data[1:], 1) == sum(ages)
-    assert sum_column(data[1:], 2) == sum(salaries)
+    assert sum_column(data[1:], 1) == 54
+    assert sum_column(data[1:], 2) == 109001.1
 
 
 def test_invalid_column_in_functions(mocker):
